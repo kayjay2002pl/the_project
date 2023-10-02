@@ -3,24 +3,24 @@ version: '3.8'
 services:
 
   database:
-    container_name: pg_db
+    container_name: database
     image: postgres
     restart: always
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=passwd
+      - POSTGRES_DB=demo_db
 
   app:
     container_name: app
     build: .
-    command: bash -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: bash -c "cd src && alembic revision --autogenerate && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - .:/app
     ports:
       - 8000:8000
     depends_on:
-      - db
+      - database
     restart: always
