@@ -16,7 +16,7 @@ services:
   app:
     container_name: app
     build: .
-    command: bash -c "cd src && alembic revision --autogenerate && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: bash -c "cd src && alembic upgrade head && alembic revision --autogenerate && alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - .:/app
     ports:
@@ -24,3 +24,21 @@ services:
     depends_on:
       - database
     restart: always
+
+  redis: 
+    container_name: redis
+    image: redis:7.2.1-alpine
+
+  celery_worker:
+    container_name: celery_worker
+    build: .
+    command: bash -c "cd src && celery -A celery_worker.celery2 worker --loglevel=info"
+    volumes:
+      - .:/app
+    environment:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - app
+      - redis
+      - database

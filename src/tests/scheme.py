@@ -1,4 +1,8 @@
 from pydantic import BaseModel
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
 
 class DemoScheme(BaseModel):
     school_name: str
