@@ -1,7 +1,5 @@
 import json, unittest
 
-from dotenv import load_dotenv
-
 from scheme import DemoScheme
 from model import Demo
 
