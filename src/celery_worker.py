@@ -1,8 +1,13 @@
 import os, json
 from celery import Celery
 from dotenv import load_dotenv
+import plotly.express as px
+import pandas as pd
+
 import models.demo as demo
 import schemes.demo_scheme as demo_scheme
+import models.charts as charts
+import schemes.charts_scheme as charts_scheme
 from data.db_conf import db_session 
 
 
@@ -63,3 +68,24 @@ def fill_database():
 if not os.path.isfile("data/controlfile.txt"):
     fill_database()
     open("data/controlfile.txt", "w").close()
+
+@celery2.task(name="create_chart")
+def create_chart(limit, category):
+    query = "SELECT school_name, total_enrollment, grade_k, grade_1, grade_2, grade_3, grade_4, grade_5, grade_6, grade_7, grade_8 FROM demo WHERE category ='All Students' LIMIT " + str(limit)
+    rows = pd.read_sql_query(query, db.connection())
+    fig = px.pie(rows, values=category, names="school_name")
+    number = 1
+    while os.path.isfile("data/charts/chart"+ str(number)+ ".png"):
+        number += 1
+    fig.write_image("data/charts/chart" + str(number)+ ".png")
+    post = charts_scheme.ChartScheme(
+        filename= "chart" + str(number)+ ".png"
+    )
+    db_post = charts.Charts(
+        filename = post.filename
+    )
+    db.add(db_post)
+    db.commit()
+    db.refresh(db_post)
+    id = db.query(charts.Charts).filter(charts.Charts.filename == "chart" + str(number)+ ".png").all()
+    return "/chart?id="+ str(id[0].chart_id)

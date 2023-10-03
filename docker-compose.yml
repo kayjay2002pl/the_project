@@ -42,3 +42,4 @@ services:
       - app
       - redis
       - database
+    restart: always
